@@ -1,6 +1,5 @@
 /// <reference types="vite/client" />
 
-declare module '@personaxyz/ad-sdk';
 interface ImportMetaEnv {
     readonly VITE_REFRESH_INTERVAL?: number,
     readonly VITE_FETCH_ALL_BLOCKS?: boolean,
