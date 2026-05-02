@@ -1,0 +1,72 @@
+---
+version: "2.0"
+services:
+  explorer:
+    image: sparkdreamnft/sparkdream-explorer:latest
+    expose:
+      # HTTP — public, serves the explorer UI
+      - port: 80
+        as: 80
+        proto: tcp
+        accept:
+          - explorer.sparkdream.io
+          - explorer-devnet.sparkdream.io
+          - explorer-testnet.sparkdream.io
+        to:
+          - global: true
+      # SSH for management
+      - port: 2222
+        as: 2222
+        proto: tcp
+        to:
+          - global: true
+    env:
+      - "SSH_PUBLIC_KEY=ssh-ed25519 YOUR_PUBLIC_KEY_HERE"
+      # Headscale coordination server URL (provider:forwarded_port)
+      - "HEADSCALE_URL=http://HEADSCALE_PROVIDER:PORT"
+      # Pre-auth key from: headscale preauthkeys create --user sparkdream --reusable --expiration 8760h
+      - "TS_AUTHKEY=CHANGE_ME"
+      # Hostname for this node on the Tailscale mesh
+      - "TS_HOSTNAME=explorer"
+      # Tailscale state directory (on persistent storage)
+      - "TS_STATE_DIR=/data/tailscale"
+      # Tailscale TCP tunnels (userspace networking can't bind to Tailscale IPs)
+      # Format: local_port:remote_tailscale_ip:remote_port
+      # The explorer connects to the sentry's REST API and RPC via these tunnels.
+      # Update NODE_API_ENDPOINT and NODE_RPC_ENDPOINT to use the local tunnel ports.
+      - "TS_TUNNEL_1=11317:100.64.0.14:1317"
+      - "TS_TUNNEL_2=26657:100.64.0.14:26657"
+      # Node endpoints — relative paths, reverse-proxied by nginx to socat tunnels
+      - "NODE_API_ENDPOINT=/api"
+      - "NODE_RPC_ENDPOINT=/rpc"
+    params:
+      storage:
+        data:
+          mount: /data
+          readOnly: false
+profiles:
+  compute:
+    explorer:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          - size: 512Mi
+          - name: data
+            size: 1Gi
+            attributes:
+              persistent: true
+              class: beta3
+  placement:
+    dcloud:
+      pricing:
+        explorer:
+          denom: uact
+          amount: 1000
+deployment:
+  explorer:
+    dcloud:
+      profile: explorer
+      count: 1
