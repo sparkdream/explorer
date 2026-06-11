@@ -2,7 +2,7 @@
 version: "2.0"
 services:
   explorer:
-    image: sparkdreamnft/sparkdream-explorer:latest
+    image: sparkdreamnft/sparkdream-explorer:v1.0.5
     expose:
       # HTTP — public, serves the explorer UI
       - port: 80
